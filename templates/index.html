@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Test Case Generator</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+      :root {
+        --primary-color: #4f46e5; /* Indigo */
+        --primary-hover: #4338ca;
+        --secondary-color: #64748b;
+        --bg-color: #f8fafc;
+        --card-bg: #ffffff;
+        --text-color: #1e293b;
+      }
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        min-height: 100vh;
+      }
+
+      .navbar {
+        background: linear-gradient(to right, #4f46e5, #3b82f6);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .navbar-brand {
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+        transform: translateY(-1px);
+      }
+
+      .card {
+        border: none;
+        border-radius: 1rem;
+        background-color: var(--card-bg);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        margin-bottom: 2rem;
+        overflow: hidden;
+      }
+
+      .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1.5rem;
+        font-weight: 600;
+        color: #334155;
+        font-size: 1.1rem;
+      }
+
+      .card-body {
+        padding: 1.5rem;
+      }
+
+      .form-control {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+      }
+
+      .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
+
+      .component-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        height: 100%;
+        transition: transform 0.2s;
+      }
+
+      .component-card:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+      }
+
+      .component-label {
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      .component-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .table thead th {
+        background-color: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      
+      .table-striped > tbody > tr:nth-of-type(odd) > * {
+          background-color: rgba(248, 250, 252, 0.5);
+          box-shadow: none;
+      }
+
+      .badge-type {
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 600;
+        border-radius: 0.375rem;
+      }
+
+      /* Loading Overlay */
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        backdrop-filter: blur(2px);
+      }
+      
+      .spinner-custom {
+        width: 3rem;
+        height: 3rem;
+        border: 0.25rem solid #e2e8f0;
+        border-top: 0.25rem solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+      <div class="spinner-custom mb-3"></div>
+      <h5 class="fw-bold text-primary">Generating Test Cases...</h5>
+      <p class="text-muted">Analyzing your user story with AI</p>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <i class="fa-solid fa-robot me-2"></i>AI TestGen
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="#"><i class="fa-solid fa-house me-1"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="alert('Settings feature coming soon!')"><i class="fa-solid fa-gear me-1"></i> Settings</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-lg-10 mx-auto">
+          
+          <!-- Input Section -->
+          <div class="card">
+            <div class="card-header">
+              <i class="fa-solid fa-pen-nib me-2 text-primary"></i> Input User Story
+            </div>
+            <div class="card-body">
+              <form method="post" action="{{ url_for('generate') }}" onsubmit="showLoading()">
+                <div class="mb-4">
+                  <label for="story" class="form-label text-muted fw-medium">Describe your requirement</label>
+                  <textarea id="story" name="story" class="form-control" rows="3" placeholder="Format: As a <role>, I want <feature> so that <benefit>...">{{ story or "" }}</textarea>
+                  <div class="form-text mt-2"><i class="fa-regular fa-lightbulb me-1"></i> Tip: Be specific about the role and the desired outcome for better results.</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                  <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-rotate-left me-2"></i> Clear
+                  </a>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Generate Test Cases
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {% if components %}
+          <!-- Extracted Components Section -->
+          <div class="row mb-4 g-4">
+            <div class="col-md-4">
+              <div class="component-card">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fa-solid fa-user-tag me-2 text-primary"></i>
+                  <div class="component-label mb-0">Role</div>
+                </div>
+                <div class="component-value">{{ components.role }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="component-card">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fa-solid fa-list-check me-2 text-success"></i>
+                  <div class="component-label mb-0">Feature</div>
+                </div>
+                <div class="component-value">{{ components.feature }}</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="component-card">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fa-solid fa-bullseye me-2 text-warning"></i>
+                  <div class="component-label mb-0">Benefit</div>
+                </div>
+                <div class="component-value">{{ components.benefit }}</div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if test_cases %}
+          <!-- Results Section -->
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
+              <span><i class="fa-solid fa-table-list me-2 text-primary"></i> Generated Test Cases</span>
+              <a class="btn btn-success btn-sm" href="{{ url_for('download') }}">
+                <i class="fa-solid fa-file-csv me-2"></i> Download CSV
+              </a>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th class="ps-4">ID</th>
+                      <th>Type</th>
+                      <th>Description</th>
+                      <th>Preconditions</th>
+                      <th>Steps</th>
+                      <th class="pe-4">Expected Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for tc in test_cases %}
+                    <tr>
+                      <td class="ps-4 fw-medium text-secondary">{{ tc["Test Case ID"] }}</td>
+                      <td>
+                        {% if "Positive" in tc["Test Type"] %}
+                          <span class="badge bg-success bg-opacity-10 text-success badge-type">Positive</span>
+                        {% elif "Negative" in tc["Test Type"] %}
+                          <span class="badge bg-danger bg-opacity-10 text-danger badge-type">Negative</span>
+                        {% elif "Boundary" in tc["Test Type"] %}
+                          <span class="badge bg-warning bg-opacity-10 text-warning badge-type">Boundary</span>
+                        {% else %}
+                          <span class="badge bg-primary bg-opacity-10 text-primary badge-type">{{ tc["Test Type"] }}</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ tc["Description"] }}</td>
+                      <td><small>{{ tc["Preconditions"] }}</small></td>
+                      <td><small>{{ tc["Test Steps"] }}</small></td>
+                      <td class="pe-4"><small>{{ tc["Expected Result"] }}</small></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      function showLoading() {
+        const storyText = document.getElementById('story').value.trim();
+        if (storyText) {
+          document.getElementById('loading-overlay').style.display = 'flex';
+        }
+      }
+    </script>
+  </body>
+</html>
