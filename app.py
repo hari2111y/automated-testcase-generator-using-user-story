@@ -6,7 +6,7 @@ from ai_extractor import extract_story_components
 from generator import generate_test_cases
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "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")
+app.secret_key = os.environ.get("SECRET_KEY", "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")
 
 
 @app.route("/", methods=["GET"])
