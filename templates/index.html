@@ -117,33 +117,51 @@
 
       .table thead th {
         background-color: #f8fafc;
-        color: #475569;
-        font-weight: 600;
+        color: #64748b;
+        font-weight: 700;
         text-transform: uppercase;
         font-size: 0.75rem;
         letter-spacing: 0.05em;
         padding: 1rem;
         border-bottom: 2px solid #e2e8f0;
+        border-top: none;
       }
 
       .table tbody td {
-        padding: 1rem;
-        vertical-align: middle;
+        padding: 1.25rem 1rem;
+        vertical-align: top;
         color: #334155;
         border-bottom: 1px solid #f1f5f9;
+        font-size: 0.95rem;
       }
       
       .table-striped > tbody > tr:nth-of-type(odd) > * {
-          background-color: rgba(248, 250, 252, 0.5);
-          box-shadow: none;
+          background-color: transparent;
+      }
+      
+      .table-hover tbody tr:hover {
+          background-color: #f8fafc;
       }
 
       .badge-type {
-        padding: 0.35em 0.65em;
+        padding: 0.4em 0.8em;
         font-size: 0.75em;
-        font-weight: 600;
+        font-weight: 700;
         border-radius: 0.375rem;
+        text-transform: uppercase;
+        display: inline-block;
+        min-width: 80px;
+        text-align: center;
       }
+      
+      .badge-positive { background-color: #dcfce7; color: #166534; }
+      .badge-negative { background-color: #fee2e2; color: #991b1b; }
+      .badge-boundary { background-color: #fef9c3; color: #854d0e; }
+      .badge-validation { background-color: #dbeafe; color: #1e40af; }
+      .badge-exception { background-color: #f3e8ff; color: #6b21a8; }
+      .badge-security { background-color: #e0f2fe; color: #075985; }
+      .badge-performance { background-color: #ffedd5; color: #9a3412; }
+      .badge-default { background-color: #f1f5f9; color: #475569; }
 
       /* Loading Overlay */
       #loading-overlay {
@@ -216,14 +234,14 @@
               <i class="fa-solid fa-pen-nib me-2 text-primary"></i> Input User Story
             </div>
             <div class="card-body">
-              <form method="post" action="{{ url_for('generate') }}" onsubmit="showLoading()">
+              <form method="post" action="/generate">
                 <div class="mb-4">
                   <label for="story" class="form-label text-muted fw-medium">Describe your requirement</label>
-                  <textarea id="story" name="story" class="form-control" rows="3" placeholder="Format: As a <role>, I want <feature> so that <benefit>...">{{ story or "" }}</textarea>
+                  <textarea id="story" name="user_story" class="form-control" rows="3" placeholder="Format: As a <role>, I want <feature> so that <benefit>...">{{ user_story if user_story else '' }}</textarea>
                   <div class="form-text mt-2"><i class="fa-regular fa-lightbulb me-1"></i> Tip: Be specific about the role and the desired outcome for better results.</div>
                 </div>
                 <div class="d-flex justify-content-end gap-2">
-                  <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                  <a href="/" class="btn btn-outline-secondary">
                     <i class="fa-solid fa-rotate-left me-2"></i> Clear
                   </a>
                   <button type="submit" class="btn btn-primary">
@@ -234,80 +252,73 @@
             </div>
           </div>
 
-          {% if components %}
-          <!-- Extracted Components Section -->
-          <div class="row mb-4 g-4">
-            <div class="col-md-4">
-              <div class="component-card">
-                <div class="d-flex align-items-center mb-2">
-                  <i class="fa-solid fa-user-tag me-2 text-primary"></i>
-                  <div class="component-label mb-0">Role</div>
+          <!-- Parsed Story Components -->
+          <div class="row mb-4" id="parsed-components">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                  <h6 class="text-uppercase text-muted fw-bold small mb-2"><i class="fa-solid fa-user me-2"></i>Role</h6>
+                  <p class="fs-5 fw-medium mb-0 text-dark" id="role-display">-</p>
                 </div>
-                <div class="component-value">{{ components.role }}</div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                  <h6 class="text-uppercase text-muted fw-bold small mb-2"><i class="fa-solid fa-list-check me-2"></i>Feature</h6>
+                  <p class="fs-5 fw-medium mb-0 text-dark" id="feature-display">-</p>
+                </div>
               </div>
             </div>
             <div class="col-md-4">
-              <div class="component-card">
-                <div class="d-flex align-items-center mb-2">
-                  <i class="fa-solid fa-list-check me-2 text-success"></i>
-                  <div class="component-label mb-0">Feature</div>
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                  <h6 class="text-uppercase text-muted fw-bold small mb-2"><i class="fa-solid fa-star me-2"></i>Benefit</h6>
+                  <p class="fs-5 fw-medium mb-0 text-dark" id="benefit-display">-</p>
                 </div>
-                <div class="component-value">{{ components.feature }}</div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="component-card">
-                <div class="d-flex align-items-center mb-2">
-                  <i class="fa-solid fa-bullseye me-2 text-warning"></i>
-                  <div class="component-label mb-0">Benefit</div>
-                </div>
-                <div class="component-value">{{ components.benefit }}</div>
               </div>
             </div>
           </div>
-          {% endif %}
 
-          {% if test_cases %}
+          {% if results %}
           <!-- Results Section -->
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
-              <span><i class="fa-solid fa-table-list me-2 text-primary"></i> Generated Test Cases</span>
-              <a class="btn btn-success btn-sm" href="{{ url_for('download') }}">
+              <span class="fw-bold"><i class="fa-solid fa-table-list me-2 text-primary"></i> Generated Test Cases</span>
+              {% if csv_content %}
+              <textarea id="csv-data" style="display:none;">{{ csv_content }}</textarea>
+              <button class="btn btn-success btn-sm fw-medium" onclick="downloadCSV()">
                 <i class="fa-solid fa-file-csv me-2"></i> Download CSV
-              </a>
+              </button>
+              {% endif %}
             </div>
             <div class="card-body p-0">
               <div class="table-responsive">
                 <table class="table table-hover mb-0">
                   <thead>
                     <tr>
-                      <th class="ps-4">ID</th>
-                      <th>Type</th>
-                      <th>Description</th>
-                      <th>Preconditions</th>
-                      <th>Steps</th>
-                      <th class="pe-4">Expected Result</th>
+                      <th scope="col" style="width: 100px;">ID</th>
+                      <th scope="col" style="width: 120px;">Type</th>
+                      <th scope="col">Description</th>
+                      <th scope="col">Preconditions</th>
+                      <th scope="col">Steps</th>
+                      <th scope="col">Expected Result</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for tc in test_cases %}
+                    {% for row in results %}
                     <tr>
-                      <td class="ps-4 fw-medium text-secondary">{{ tc["Test Case ID"] }}</td>
+                      <td class="fw-medium text-secondary">{{ row['ID'] }}</td>
                       <td>
-                        {% if "Positive" in tc["Test Type"] %}
-                          <span class="badge bg-success bg-opacity-10 text-success badge-type">Positive</span>
-                        {% elif "Negative" in tc["Test Type"] %}
-                          <span class="badge bg-danger bg-opacity-10 text-danger badge-type">Negative</span>
-                        {% elif "Boundary" in tc["Test Type"] %}
-                          <span class="badge bg-warning bg-opacity-10 text-warning badge-type">Boundary</span>
-                        {% else %}
-                          <span class="badge bg-primary bg-opacity-10 text-primary badge-type">{{ tc["Test Type"] }}</span>
-                        {% endif %}
+                        {% set type_lower = row['Type']|lower %}
+                        <span class="badge-type badge-{{ type_lower if type_lower in ['positive', 'negative', 'boundary', 'validation', 'exception', 'security', 'performance'] else 'default' }}">
+                          {{ row['Type'] }}
+                        </span>
                       </td>
-                      <td>{{ tc["Description"] }}</td>
-                      <td><small>{{ tc["Preconditions"] }}</small></td>
-                      <td><small>{{ tc["Test Steps"] }}</small></td>
-                      <td class="pe-4"><small>{{ tc["Expected Result"] }}</small></td>
+                      <td>{{ row['Description'] }}</td>
+                      <td class="text-muted small">{{ row['Preconditions'] }}</td>
+                      <td class="small">{{ row['Steps'] }}</td>
+                      <td class="small">{{ row['Expected Result'] }}</td>
                     </tr>
                     {% endfor %}
                   </tbody>
@@ -317,17 +328,69 @@
           </div>
           {% endif %}
 
+          {% if error %}
+          <div class="alert alert-danger mt-3">
+            {{ error }}
+          </div>
+          {% endif %}
+
         </div>
       </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-      function showLoading() {
-        const storyText = document.getElementById('story').value.trim();
-        if (storyText) {
-          document.getElementById('loading-overlay').style.display = 'flex';
+      document.addEventListener('DOMContentLoaded', function() {
+        const storyInput = document.getElementById('story');
+        const roleDisplay = document.getElementById('role-display');
+        const featureDisplay = document.getElementById('feature-display');
+        const benefitDisplay = document.getElementById('benefit-display');
+        
+        function parseUserStory() {
+          const text = storyInput.value;
+          
+          const regex = /As an?\s+([\s\S]+?)\s*,?\s*I want\s+([\s\S]+?)\s*so that\s+([\s\S]+)/i;
+          
+          const match = text.match(regex);
+          
+          if (match) {
+            roleDisplay.textContent = match[1].trim();
+            featureDisplay.textContent = match[2].trim();
+            
+            let benefit = match[3].trim();
+            if (benefit.endsWith('.')) {
+              benefit = benefit.slice(0, -1);
+            }
+            benefitDisplay.textContent = benefit;
+          } else {
+            
+            roleDisplay.textContent = '-';
+            featureDisplay.textContent = '-';
+            benefitDisplay.textContent = '-';
+          }
         }
+
+        storyInput.addEventListener('input', parseUserStory);
+        
+        parseUserStory();
+        
+        document.querySelector('form').addEventListener('submit', function() {
+          document.getElementById('loading-overlay').style.display = 'flex';
+        });
+      });
+
+      function downloadCSV() {
+        const csv = document.getElementById('csv-data').value;
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'test_cases.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     </script>
   </body>

@@ -1,66 +1,40 @@
 import os
-from io import BytesIO
-from flask import Flask, render_template, request, redirect, url_for, send_file, session
-import pandas as pd
-from ai_extractor import extract_story_components
-from generator import generate_test_cases
+from flask import Flask, render_template, request, send_file, Response
+from ai_engine import generate_testcases, convert_to_dataframe
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "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")
 
 
-@app.route("/", methods=["GET"])
-def index():
-    # Clear session to ensure a fresh start on reload
-    session.clear()
+@app.route("/")
+def home():
     return render_template("index.html")
 
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    story = request.form.get("story", "").strip()
-    if not story:
-        return redirect(url_for("index"))
-    api_key = os.environ.get("HF_API_KEY", "")
-    components = extract_story_components(story, api_key)
-    role = components.get("role", "")
-    feature = components.get("feature", "")
-    benefit = components.get("benefit", "")
+    user_story = request.form.get("user_story")
 
-    # If extraction failed (all empty), hide the components section in UI
-    if not role and not feature and not benefit:
-        components = None
+    try:
+        raw_output = generate_testcases(user_story)
+        df = convert_to_dataframe(raw_output)
+        results = df.to_dict(orient="records")
+        csv_content = df.to_csv(index=False)
 
-    test_cases = generate_test_cases(role, feature, benefit, api_key=api_key, story=story)
-    session["components"] = components
-    session["test_cases"] = test_cases
-    session["story"] = story
-    return render_template("index.html", components=components, test_cases=test_cases, story=story)
+        return render_template(
+            "index.html",
+            results=results,
+            csv_content=csv_content,
+            user_story=user_story
+        )
+
+    except Exception as e:
+        return render_template("index.html", error=str(e))
 
 
-@app.route("/download", methods=["GET"])
+@app.route("/download")
 def download():
-    test_cases = session.get("test_cases")
-    if not test_cases:
-        return redirect(url_for("index"))
-    df = pd.DataFrame(test_cases, columns=[
-        "Test Case ID",
-        "Description",
-        "Preconditions",
-        "Test Steps",
-        "Expected Result",
-        "Test Type",
-    ])
-    buffer = BytesIO()
-    df.to_csv(buffer, index=False)
-    buffer.seek(0)
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name="generated_test_cases.csv",
-        mimetype="text/csv",
-    )
+    return "Download not available via this route."
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=True)
+    app.run(debug=True)
