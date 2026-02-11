@@ -55,11 +55,12 @@ def convert_to_dataframe(raw_text):
 
     df.columns = df.columns.str.strip()
 
-    df["ID"] = df["ID"].fillna(method="ffill")
-    df["Type"] = df["Type"].fillna(method="ffill")
-    df["Description"] = df["Description"].fillna(method="ffill")
+    df["ID"] = df["ID"].ffill()
+    df["Type"] = df["Type"].ffill()
+    df["Description"] = df["Description"].ffill()
 
     df = df[["ID", "Type", "Description", "Preconditions", "Steps", "Expected Result"]]
 
 
     return df
+
