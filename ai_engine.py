@@ -2,7 +2,7 @@ import pandas as pd
 from huggingface_hub import InferenceClient
 from io import StringIO
 
-HF_TOKEN = "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"
+HF_TOKEN = "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"
 client = InferenceClient(api_key=HF_TOKEN)
 
 
@@ -60,5 +60,6 @@ def convert_to_dataframe(raw_text):
     df["Description"] = df["Description"].fillna(method="ffill")
 
     df = df[["ID", "Type", "Description", "Preconditions", "Steps", "Expected Result"]]
+
 
     return df
